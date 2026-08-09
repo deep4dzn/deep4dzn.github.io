@@ -54,7 +54,7 @@
     }
 
     body {
-      padding-top: 112px;
+      padding-top: 0;
     }
 
     * {
@@ -72,6 +72,9 @@
       margin: 0;
       background: transparent;
       border-bottom: 0;
+    }
+    .hide-hero {
+      display: none !important;
     }
 
     .hero .wrap {
@@ -192,7 +195,7 @@
 
     @media (max-width: 600px) {
       body {
-        padding-top: 86px;
+        padding-top: 0;
       }
 
       .hero {
@@ -234,7 +237,7 @@
 
     /* ─── SECTIONS: Cinematic Backgrounds ─── */
     .gallery-root {
-      padding: 0 0 40px;
+      padding: 0;
     }
 
     .cinema-section {
@@ -263,6 +266,45 @@
         linear-gradient(180deg, rgba(10, 10, 10, 0.7) 0%, transparent 20%),
         linear-gradient(180deg, transparent 80%, rgba(10, 10, 10, 0.7) 100%);
       pointer-events: none;
+    }
+    .skeleton-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #111;
+      z-index: 9999;
+      animation: skeleton-shimmer 1.5s infinite;
+    }
+    @keyframes skeleton-shimmer {
+      0% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+      100% { opacity: 0.3; }
+    }
+
+    .cinema-section.no-vignette::after {
+      display: none !important;
+    }
+
+    .cinema-section.is-solid::before {
+      opacity: 1 !important;
+    }
+
+    .cinema-section.no-top-seam::after {
+      background: linear-gradient(180deg, transparent 80%, rgba(10, 10, 10, 0.7) 100%) !important;
+    }
+
+    .cinema-section.no-bottom-seam::after {
+      background: linear-gradient(180deg, rgba(10, 10, 10, 0.7) 0%, transparent 20%) !important;
+    }
+
+    .cinema-section.no-top-seam.no-bottom-seam::after {
+      display: none !important;
+    }
+
+    .whatsapp-footer.no-line::before {
+      display: none !important;
     }
 
     .cinema-section > * {
@@ -721,19 +763,7 @@
 
 <body>
 
-  <!-- Top Bar -->
-  <header class="hero">
-    <div class="wrap">
-      <div class="bar contact-bar">
-        <img class="avatar" id="topBarLogo" src="logo.jpeg" alt="DEEP" style="cursor:pointer;border-radius:0 !important;" onclick="copyLink()"
-          title="نسخ رابط الموقع" />
-        <div class="site-brand">
-          <strong>deep Des's</strong>
-          <small>Design Gallery</small>
-        </div>
-      </div>
-    </div>
-  </header>
+  <!-- Top Bar removed -->
 
   <!-- Dynamic Gallery -->
   <main class="gallery-root" id="dynamicGalleryRoot">
@@ -887,31 +917,6 @@
       const firstSection = activeSections[0];
       const lastSection = activeSections[activeSections.length - 1];
 
-      // Top Background (قبل الأقسام)
-      const topBgType = settings.topBgType || 'match';
-      const topBgColor = settings.topBgColor || '#0a0a0a';
-      if (topBgType === 'custom') {
-        document.body.style.background = topBgColor;
-      } else if (firstSection) {
-        document.body.style.background = computeSectionBgCss(firstSection);
-      } else {
-        document.body.style.background = '#0a0a0a';
-      }
-
-      // Footer Background (قسم الواتساب)
-      const footerBgType = settings.footerBgType || 'match';
-      const footerBgColor = settings.footerBgColor || '';
-      const waFooter = document.querySelector('.whatsapp-footer');
-      if (waFooter) {
-        if (footerBgType === 'custom' && footerBgColor) {
-          waFooter.style.background = footerBgColor;
-        } else if (lastSection) {
-          waFooter.style.background = computeSectionBgCss(lastSection);
-        } else {
-          waFooter.style.background = 'linear-gradient(180deg, transparent 0%, rgba(37, 211, 102, 0.04) 50%, transparent 100%)';
-        }
-      }
-
       galleryRoot.innerHTML = '';
       galleryRoot.appendChild(galleryStatus);
 
@@ -921,6 +926,10 @@
       }
       setGalleryStatus('');
 
+      let prevSectionEl = null;
+      let prevBgCss = null;
+      const renderedSectionEls = [];
+
       for (const section of sections) {
         const items = sortByOrder(Object.values(section.items || {}).filter(item => item && item.imageUrl));
         if (!items.length) continue;
@@ -928,6 +937,23 @@
         const sectionEl = document.createElement('section');
         sectionEl.className = 'cinema-section';
         applySectionBackground(sectionEl, section);
+
+        const bgCss = computeSectionBgCss(section);
+        const bgType = section.bgType || 'cinema';
+
+        if (bgType === 'solid') {
+          sectionEl.classList.add('no-vignette');
+          sectionEl.classList.add('is-solid');
+        }
+
+        if (prevSectionEl && prevBgCss === bgCss) {
+          prevSectionEl.classList.add('no-bottom-seam');
+          sectionEl.classList.add('no-top-seam');
+        }
+
+        prevSectionEl = sectionEl;
+        prevBgCss = bgCss;
+        renderedSectionEls.push(sectionEl);
 
         // Animated glow
         const glow = document.createElement('div');
@@ -1010,6 +1036,44 @@
         galleryRoot.appendChild(sectionEl);
       }
 
+      const firstSectionEl = renderedSectionEls[0];
+      const lastSectionEl = renderedSectionEls[renderedSectionEls.length - 1];
+
+      // Top Background (قبل الأقسام)
+      const topBgType = settings.topBgType || 'match';
+      const topBgColor = settings.topBgColor || '#0a0a0a';
+      if (topBgType === 'custom') {
+        document.body.style.background = topBgColor;
+      } else if (firstSection) {
+        document.body.style.background = computeSectionBgCss(firstSection);
+        if (firstSectionEl) firstSectionEl.classList.add('no-top-seam');
+      } else {
+        document.body.style.background = '#0a0a0a';
+      }
+
+      // Footer Background (قسم الواتساب)
+      const footerBgType = settings.footerBgType || 'match';
+      const footerBgColor = settings.footerBgColor || '';
+      const waFooter = document.querySelector('.whatsapp-footer');
+      if (waFooter) {
+        if (footerBgType === 'custom' && footerBgColor) {
+          waFooter.style.background = footerBgColor;
+          waFooter.classList.remove('no-line');
+        } else if (lastSection) {
+          waFooter.style.background = 'transparent';
+          waFooter.classList.add('no-line');
+          if (lastSectionEl) {
+            lastSectionEl.classList.add('no-bottom-seam');
+            // Remove bottom padding from the section so it blends smoothly
+            lastSectionEl.style.paddingBottom = '0';
+            lastSectionEl.appendChild(waFooter);
+          }
+        } else {
+          waFooter.style.background = 'linear-gradient(180deg, transparent 0%, rgba(37, 211, 102, 0.04) 50%, transparent 100%)';
+          waFooter.classList.remove('no-line');
+        }
+      }
+
       if (!galleryRoot.querySelector('.cinema-section')) setGalleryStatus('\u0644\u0627 \u062a\u0648\u062c\u062f \u0635\u0648\u0631 \u062d\u0627\u0644\u064a\u0627.');
     }
 
@@ -1020,12 +1084,18 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && lb.open) closeLightbox(); });
 
     (async function bootGallery() {
+      // Show skeleton loader initially
+      document.body.classList.add('skeleton');
       setGalleryStatus('\u062c\u0627\u0631\u064a \u0627\u0644\u062a\u062d\u0645\u064a\u0644\u2026');
       try {
         const res = await fetch(GALLERY_API_BASE + '/gallery', { cache: 'no-store' });
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data.error || ('gallery ' + res.status));
         renderGallery(data.gallery || {});
+        // Remove skeleton and show hero after content is ready
+        document.body.classList.remove('skeleton');
+        const skelOverlay = document.querySelector('.skeleton-overlay');
+        if (skelOverlay) skelOverlay.remove();
       } catch (error) {
         console.warn('gallery_unavailable', error);
         setGalleryStatus('\u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0623\u0642\u0633\u0627\u0645.');
