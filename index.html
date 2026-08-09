@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="Cache-Control" content="no-store" />
   <title>تصاميم ذيب</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0a0a0a" />
   <link rel="icon" type="image/jpeg" href="logo.jpeg" />
   <link rel="apple-touch-icon" href="logo.jpeg" />
   <!-- Arabic-friendly font -->
@@ -148,6 +150,124 @@
       gap: 10px;
       margin-inline-start: 8px;
       margin-inline-end: 0;
+    }
+
+    /* ─── PWA Install Prompt ─── */
+    .pwa-prompt {
+      position: fixed;
+      bottom: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 20, 20, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      border-radius: 999px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 99999;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .pwa-prompt.show {
+      bottom: 24px;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .pwa-prompt-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .pwa-prompt-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      direction: rtl;
+    }
+
+    .pwa-prompt-text strong {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1;
+      font-family: "Cairo", sans-serif;
+    }
+
+    .pwa-prompt-text span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    .pwa-prompt-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pwa-btn-install {
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-family: "Cairo", sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px var(--brand-glow);
+      transition: 0.25s;
+    }
+
+    .pwa-btn-install:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(230, 48, 48, 0.6);
+    }
+
+    .pwa-btn-close {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+
+    .pwa-btn-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    @media (max-width: 600px) {
+      .pwa-prompt {
+        width: 90%;
+        padding: 8px 12px;
+        gap: 12px;
+      }
+      .pwa-prompt-icon {
+        width: 38px;
+        height: 38px;
+      }
+      .pwa-prompt-text strong {
+        font-size: 13px;
+      }
+      .pwa-prompt-text span {
+        font-size: 10px;
+      }
     }
 
     .contact .c-item {
@@ -704,6 +824,8 @@
       z-index: 1;
       pointer-events: none;
       opacity: 0.5;
+      -webkit-mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 140px), transparent 100%);
+      mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 140px), transparent 100%);
     }
     .cinema-pattern.pattern-grid {
       background-image:
@@ -731,26 +853,7 @@
       background-size: 30px 30px;
     }
 
-    /* Animated glow for cinematic sections */
-    .cinema-section .cinema-glow {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 80%;
-      height: 80%;
-      transform: translate(-50%, -50%);
-      border-radius: 50%;
-      filter: blur(100px);
-      opacity: 0.15;
-      pointer-events: none;
-      z-index: 0;
-      animation: glow-pulse 6s ease-in-out infinite alternate;
-    }
 
-    @keyframes glow-pulse {
-      0% { opacity: 0.1; transform: translate(-50%, -50%) scale(0.9); }
-      100% { opacity: 0.2; transform: translate(-50%, -50%) scale(1.1); }
-    }
 
     /* ─── Global Full-Page Loader ─── */
     .global-loader-overlay {
@@ -761,12 +864,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
     }
     
     .global-loader-overlay.hidden {
-      opacity: 0;
-      visibility: hidden;
+      display: none;
+    }
+    
+    /* Stop heavy box-shadow repaints instantly to allow smooth fade out */
+    .global-loader-overlay.hidden .loader,
+    .global-loader-overlay.hidden .loader:before,
+    .global-loader-overlay.hidden .loader:after {
+      animation: none !important;
     }
     
     .loader {
@@ -796,7 +904,7 @@
     .loader:after {
       color: var(--color-2);
       transform: rotateY(70deg);
-      animation-delay: 0.4s;
+      animation-delay: -0.6s;
     }
 
     @keyframes rotate {
@@ -826,6 +934,19 @@
 
   <div class="global-loader-overlay">
     <span class="loader"></span>
+  </div>
+
+  <!-- PWA Install Prompt -->
+  <div id="pwaPrompt" class="pwa-prompt">
+    <img src="logo.jpeg" alt="App Icon" class="pwa-prompt-icon">
+    <div class="pwa-prompt-text">
+      <strong>تثبيت التطبيق</strong>
+      <span>للوصول السريع لاحقاً</span>
+    </div>
+    <div class="pwa-prompt-actions">
+      <button id="pwaInstallBtn" class="pwa-btn-install">تثبيت</button>
+      <button id="pwaCloseBtn" class="pwa-btn-close">&times;</button>
+    </div>
   </div>
 
   <!-- Dynamic Gallery -->
@@ -1018,11 +1139,7 @@
         prevBgCss = bgCss;
         renderedSectionEls.push(sectionEl);
 
-        // Animated glow
-        const glow = document.createElement('div');
-        glow.className = 'cinema-glow';
-        glow.style.background = section.bgColor || '#e63030';
-        sectionEl.appendChild(glow);
+
 
         // Package header
         const header = document.createElement('div');
@@ -1146,14 +1263,82 @@
     closeBtn.addEventListener('click', closeLightbox);
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && lb.open) closeLightbox(); });
 
+    const pwaPrompt = document.getElementById('pwaPrompt');
+    const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+    const pwaCloseBtn = document.getElementById('pwaCloseBtn');
+    let deferredPrompt;
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+
+    // Handle Install Prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      deferredPrompt = e;
+      
+      // Check if user already dismissed it in this session
+      if (!sessionStorage.getItem('pwaPromptDismissed')) {
+        // Show our beautiful prompt after a slight delay
+        setTimeout(() => {
+          pwaPrompt.classList.add('show');
+        }, 3000);
+      }
+    });
+
+    pwaInstallBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      // Hide the prompt
+      pwaPrompt.classList.remove('show');
+      // Show the install prompt
+      deferredPrompt.prompt();
+      // Wait for the user to respond to the prompt
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        sessionStorage.setItem('pwaPromptDismissed', 'true');
+      }
+      deferredPrompt = null;
+    });
+
+    pwaCloseBtn.addEventListener('click', () => {
+      pwaPrompt.classList.remove('show');
+      sessionStorage.setItem('pwaPromptDismissed', 'true');
+    });
+
+    // App installed event handler
+    window.addEventListener('appinstalled', () => {
+      pwaPrompt.classList.remove('show');
+      deferredPrompt = null;
+      console.log('PWA was installed');
+    });
+
     (async function bootGallery() {
       try {
         const res = await fetch(GALLERY_API_BASE + '/gallery', { cache: 'no-store' });
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data.error || ('gallery ' + res.status));
+        
+        // Render the DOM elements (they will be hidden behind the loader)
         renderGallery(data.gallery || {});
         
-        // Hide loader after content is ready
+        // Wait for all images to fully download and decode
+        const images = Array.from(document.querySelectorAll('.gallery-root img'));
+        const imagePromises = images.map(img => {
+          if (img.complete) return Promise.resolve();
+          return new Promise(resolve => {
+            img.addEventListener('load', resolve);
+            img.addEventListener('error', resolve);
+          });
+        });
+        
+        await Promise.all(imagePromises);
+
+        // Hide the loader instantly
         const loaderOverlay = document.querySelector('.global-loader-overlay');
         if (loaderOverlay) loaderOverlay.classList.add('hidden');
       } catch (error) {
