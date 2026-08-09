@@ -34,7 +34,7 @@
       --ink: #ffffff;
       --muted: #a0a0a0;
       --card: rgba(255, 255, 255, 0.06);
-      --radius: 20px;
+      --radius: 0px;
       --brand: #e63030;
       --brand-glow: rgba(230, 48, 48, 0.35);
     }
@@ -336,7 +336,7 @@
       width: 100%;
       margin: 0;
       aspect-ratio: var(--ratio, 1);
-      border-radius: var(--radius);
+      border-radius: 0 !important;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.08);
       overflow: hidden;
@@ -354,7 +354,7 @@
       height: 100%;
       display: block;
       object-fit: contain;
-      border-radius: 0;
+      border-radius: 0 !important;
       transition: opacity 0.4s ease;
     }
 
@@ -652,13 +652,40 @@
 
     /* Custom color via CSS variable */
     .cinema-bg-custom::before {
-      background: linear-gradient(
+      background: var(--custom-bg, linear-gradient(
         135deg,
         color-mix(in oklab, var(--section-color, #e63030) 12%, #0a0a0a) 0%,
         color-mix(in oklab, var(--section-color, #e63030) 25%, #0a0a0a) 30%,
         color-mix(in oklab, var(--section-color, #e63030) 35%, #0a0a0a) 60%,
         color-mix(in oklab, var(--section-color, #e63030) 12%, #0a0a0a) 100%
-      );
+      )) !important;
+    }
+
+    /* Patterns */
+    .bg-pattern-grid::before {
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px) !important;
+      background-size: 24px 24px !important;
+    }
+    .bg-pattern-dots::before {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px) !important;
+      background-size: 18px 18px !important;
+    }
+    .bg-pattern-diagonal::before {
+      background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 2px, transparent 0, transparent 12px) !important;
+    }
+    .bg-pattern-carbon::before {
+      background-image:
+        linear-gradient(27deg, rgba(0, 0, 0, 0.4) 5px, transparent 5px),
+        linear-gradient(207deg, rgba(0, 0, 0, 0.4) 5px, transparent 5px),
+        linear-gradient(117deg, rgba(255, 255, 255, 0.03) 5px, transparent 5px),
+        linear-gradient(297deg, rgba(255, 255, 255, 0.03) 5px, transparent 5px) !important;
+      background-size: 16px 16px !important;
+    }
+    .bg-pattern-waves::before {
+      background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 20%, transparent 20%), radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.03) 20%, transparent 20%) !important;
+      background-size: 30px 30px !important;
     }
 
     /* Animated glow for cinematic sections */
@@ -690,7 +717,7 @@
   <header class="hero">
     <div class="wrap">
       <div class="bar contact-bar">
-        <img class="avatar" src="logo.jpeg" alt="DEEP" style="cursor:pointer" onclick="copyLink()"
+        <img class="avatar" id="topBarLogo" src="logo.jpeg" alt="DEEP" style="cursor:pointer;border-radius:0 !important;" onclick="copyLink()"
           title="نسخ رابط الموقع" />
         <div class="site-brand">
           <strong>deep Des's</strong>
@@ -773,6 +800,18 @@
     function groupedRows(items) { const rows = new Map(); for (const item of items) { const row = rowNumber(item); if (!rows.has(row)) rows.set(row, []); rows.get(row).push(item); } return Array.from(rows.entries()).sort((a, b) => a[0] - b[0]).map((entry) => entry[1]); }
 
     function renderGallery(gallery) {
+      if (gallery && gallery.settings) {
+        if (gallery.settings.siteLogo) {
+          const logoEl = document.getElementById('topBarLogo');
+          if (logoEl) logoEl.src = gallery.settings.siteLogo;
+        }
+        if (gallery.settings.whatsapp) {
+          const waBtn = document.querySelector('.wa-btn');
+          const cleanNum = String(gallery.settings.whatsapp).replace(/[^\d+]/g, '');
+          if (waBtn && cleanNum) waBtn.href = 'https://wa.me/' + cleanNum.replace(/^\+/, '');
+        }
+      }
+
       const sections = orderedSections(gallery);
       galleryRoot.innerHTML = '';
       galleryRoot.appendChild(galleryStatus);
@@ -787,21 +826,39 @@
         const items = sortByOrder(Object.values(section.items || {}).filter(item => item && item.imageUrl));
         if (!items.length) continue;
 
-        const bgColor = section.bgColor || '';
-        const cinemaClass = getCinemaClass(bgColor);
+        const bgType = section.bgType || 'cinema';
+        const color1 = section.bgColor || '';
+        const color2 = section.bgColor2 || '#0a0a12';
+        const gradDir = section.bgGradDir || '135deg';
+        const pattern = section.bgPattern || 'none';
 
         const sectionEl = document.createElement('section');
-        sectionEl.className = 'cinema-section ' + cinemaClass;
+        let cinemaClass = 'cinema-bg-default';
 
-        // Set custom color CSS variable if needed
-        if (cinemaClass === 'cinema-bg-custom' && bgColor) {
-          sectionEl.style.setProperty('--section-color', bgColor);
+        if (bgType === 'solid' && color1) {
+          cinemaClass = 'cinema-bg-custom';
+          sectionEl.style.setProperty('--custom-bg', color1);
+        } else if (bgType === 'gradient' && color1) {
+          cinemaClass = 'cinema-bg-custom';
+          let gradCss = gradDir === 'radial'
+            ? `radial-gradient(circle at center, ${color1} 0%, ${color2} 100%)`
+            : `linear-gradient(${gradDir}, ${color1} 0%, ${color2} 100%)`;
+          sectionEl.style.setProperty('--custom-bg', gradCss);
+        } else {
+          cinemaClass = getCinemaClass(color1);
+          if (cinemaClass === 'cinema-bg-custom' && color1) {
+            sectionEl.style.setProperty('--section-color', color1);
+          }
         }
+
+        let sectionClasses = 'cinema-section ' + cinemaClass;
+        if (pattern && pattern !== 'none') sectionClasses += ' bg-pattern-' + pattern;
+        sectionEl.className = sectionClasses;
 
         // Animated glow
         const glow = document.createElement('div');
         glow.className = 'cinema-glow';
-        glow.style.background = bgColor || '#e63030';
+        glow.style.background = color1 || '#e63030';
         sectionEl.appendChild(glow);
 
         // Package header
@@ -809,17 +866,25 @@
         const align = section.titleAlign || 'right';
         header.className = 'package-header align-' + align;
 
+        // Render Title Image FIRST if available (IMAGE ABOVE TITLE TEXT)
         if (section.titleImage) {
           const titleImg = document.createElement('img');
           titleImg.className = 'section-title-img';
           titleImg.src = section.titleImage;
           titleImg.alt = section.title || 'قسم';
           titleImg.loading = 'lazy';
+          titleImg.style.display = 'block';
+          if (align === 'center') titleImg.style.margin = '0 auto 8px';
+          else if (align === 'left') titleImg.style.margin = '0 0 8px 0';
+          else titleImg.style.margin = '0 0 8px auto';
           header.appendChild(titleImg);
-        } else {
+        }
+
+        // Render Title Text SECOND if available
+        if (section.title) {
           const title = document.createElement('h2');
           title.className = 'section-title';
-          title.textContent = section.title || '\u0642\u0633\u0645';
+          title.textContent = section.title;
           header.appendChild(title);
         }
 
