@@ -249,8 +249,9 @@
       position: absolute;
       inset: 0;
       z-index: 0;
-      opacity: 0.85;
-      transition: opacity 0.5s ease;
+      background: var(--sec-bg, #0a0a12) !important;
+      opacity: 0.95;
+      transition: background 0.4s ease;
     }
 
     .cinema-section::after {
@@ -661,31 +662,38 @@
       )) !important;
     }
 
-    /* Patterns */
-    .bg-pattern-grid::before {
+    /* Pattern Overlay */
+    .cinema-pattern {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    .cinema-pattern.pattern-grid {
       background-image:
-        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px) !important;
-      background-size: 24px 24px !important;
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+      background-size: 24px 24px;
     }
-    .bg-pattern-dots::before {
-      background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px) !important;
-      background-size: 18px 18px !important;
+    .cinema-pattern.pattern-dots {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1.5px, transparent 1.5px);
+      background-size: 18px 18px;
     }
-    .bg-pattern-diagonal::before {
-      background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 2px, transparent 0, transparent 12px) !important;
+    .cinema-pattern.pattern-diagonal {
+      background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.06) 0, rgba(255, 255, 255, 0.06) 2px, transparent 0, transparent 12px);
     }
-    .bg-pattern-carbon::before {
+    .cinema-pattern.pattern-carbon {
       background-image:
-        linear-gradient(27deg, rgba(0, 0, 0, 0.4) 5px, transparent 5px),
-        linear-gradient(207deg, rgba(0, 0, 0, 0.4) 5px, transparent 5px),
-        linear-gradient(117deg, rgba(255, 255, 255, 0.03) 5px, transparent 5px),
-        linear-gradient(297deg, rgba(255, 255, 255, 0.03) 5px, transparent 5px) !important;
-      background-size: 16px 16px !important;
+        linear-gradient(27deg, rgba(0, 0, 0, 0.5) 5px, transparent 5px),
+        linear-gradient(207deg, rgba(0, 0, 0, 0.5) 5px, transparent 5px),
+        linear-gradient(117deg, rgba(255, 255, 255, 0.06) 5px, transparent 5px),
+        linear-gradient(297deg, rgba(255, 255, 255, 0.06) 5px, transparent 5px);
+      background-size: 16px 16px;
     }
-    .bg-pattern-waves::before {
-      background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 20%, transparent 20%), radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.03) 20%, transparent 20%) !important;
-      background-size: 30px 30px !important;
+    .cinema-pattern.pattern-waves {
+      background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08) 20%, transparent 20%), radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.06) 20%, transparent 20%);
+      background-size: 30px 30px;
     }
 
     /* Animated glow for cinematic sections */
@@ -799,6 +807,66 @@
     function orderedSections(gallery) { const sections = gallery && gallery.sections && typeof gallery.sections === 'object' ? gallery.sections : {}; const order = Array.isArray(gallery && gallery.sectionOrder) ? gallery.sectionOrder : Object.keys(sections); const output = []; for (const id of order) { if (sections[id]) output.push(sections[id]); } for (const [id, section] of Object.entries(sections)) { if (!order.includes(id)) output.push(section); } return sortByOrder(output); }
     function groupedRows(items) { const rows = new Map(); for (const item of items) { const row = rowNumber(item); if (!rows.has(row)) rows.set(row, []); rows.get(row).push(item); } return Array.from(rows.entries()).sort((a, b) => a[0] - b[0]).map((entry) => entry[1]); }
 
+    function applySectionBackground(sectionEl, section) {
+      const bgType = section.bgType || 'cinema';
+      const color1 = section.bgColor || '';
+      const color2 = section.bgColor2 || '#0a0a12';
+      const gradDir = section.bgGradDir || '135deg';
+      const pattern = section.bgPattern || 'none';
+
+      let bgCss = '';
+
+      if (bgType === 'solid') {
+        bgCss = color1 || '#1a1a3a';
+      } else if (bgType === 'gradient') {
+        const c1 = color1 || '#e63030';
+        const c2 = color2 || '#0a0a12';
+        if (gradDir === 'radial') {
+          bgCss = `radial-gradient(circle at center, ${c1} 0%, ${c2} 100%)`;
+        } else {
+          bgCss = `linear-gradient(${gradDir}, ${c1} 0%, ${c2} 100%)`;
+        }
+      } else {
+        const lower = (color1 || '').toLowerCase().trim();
+        if (lower === 'red' || lower === '#e63030' || lower === '#cc0000') {
+          bgCss = 'linear-gradient(135deg, #1a0505 0%, #3d0a0a 30%, #5c1010 60%, #1a0505 100%)';
+        } else if (lower === 'blue' || lower === '#2255cc') {
+          bgCss = 'linear-gradient(135deg, #050a1a 0%, #0a1a3d 30%, #10285c 60%, #050a1a 100%)';
+        } else if (lower === 'purple' || lower === '#7733cc') {
+          bgCss = 'linear-gradient(135deg, #0f051a 0%, #200a3d 30%, #35105c 60%, #0f051a 100%)';
+        } else if (lower === 'green' || lower === '#22aa44') {
+          bgCss = 'linear-gradient(135deg, #051a0a 0%, #0a3d15 30%, #105c22 60%, #051a0a 100%)';
+        } else if (lower === 'orange' || lower === '#dd7711') {
+          bgCss = 'linear-gradient(135deg, #1a0f05 0%, #3d200a 30%, #5c3510 60%, #1a0f05 100%)';
+        } else if (lower === 'pink' || lower === '#dd2266') {
+          bgCss = 'linear-gradient(135deg, #1a0510 0%, #3d0a20 30%, #5c1035 60%, #1a0510 100%)';
+        } else if (lower === 'cyan' || lower === '#11aaaa') {
+          bgCss = 'linear-gradient(135deg, #051a1a 0%, #0a3d3d 30%, #105c5c 60%, #051a1a 100%)';
+        } else if (lower === 'gold' || lower === '#ccaa22') {
+          bgCss = 'linear-gradient(135deg, #1a1505 0%, #3d2f0a 30%, #5c4810 60%, #1a1505 100%)';
+        } else if (lower === 'dark' || lower === '#222222') {
+          bgCss = 'linear-gradient(135deg, #0a0a0a 0%, #151515 30%, #1a1a1a 60%, #0a0a0a 100%)';
+        } else if (color1 && color1.startsWith('#')) {
+          bgCss = `linear-gradient(135deg, color-mix(in oklab, ${color1} 15%, #0a0a0a) 0%, color-mix(in oklab, ${color1} 35%, #0a0a0a) 50%, color-mix(in oklab, ${color1} 15%, #0a0a0a) 100%)`;
+        } else {
+          bgCss = 'linear-gradient(135deg, #0a0a12 0%, #12122a 30%, #1a1a3a 60%, #0a0a12 100%)';
+        }
+      }
+
+      sectionEl.style.setProperty('--sec-bg', bgCss);
+
+      let patternEl = sectionEl.querySelector('.cinema-pattern');
+      if (pattern && pattern !== 'none') {
+        if (!patternEl) {
+          patternEl = document.createElement('div');
+          sectionEl.insertBefore(patternEl, sectionEl.firstChild);
+        }
+        patternEl.className = 'cinema-pattern pattern-' + pattern;
+      } else if (patternEl) {
+        patternEl.remove();
+      }
+    }
+
     function renderGallery(gallery) {
       if (gallery && gallery.settings) {
         if (gallery.settings.siteLogo) {
@@ -826,39 +894,14 @@
         const items = sortByOrder(Object.values(section.items || {}).filter(item => item && item.imageUrl));
         if (!items.length) continue;
 
-        const bgType = section.bgType || 'cinema';
-        const color1 = section.bgColor || '';
-        const color2 = section.bgColor2 || '#0a0a12';
-        const gradDir = section.bgGradDir || '135deg';
-        const pattern = section.bgPattern || 'none';
-
         const sectionEl = document.createElement('section');
-        let cinemaClass = 'cinema-bg-default';
-
-        if (bgType === 'solid' && color1) {
-          cinemaClass = 'cinema-bg-custom';
-          sectionEl.style.setProperty('--custom-bg', color1);
-        } else if (bgType === 'gradient' && color1) {
-          cinemaClass = 'cinema-bg-custom';
-          let gradCss = gradDir === 'radial'
-            ? `radial-gradient(circle at center, ${color1} 0%, ${color2} 100%)`
-            : `linear-gradient(${gradDir}, ${color1} 0%, ${color2} 100%)`;
-          sectionEl.style.setProperty('--custom-bg', gradCss);
-        } else {
-          cinemaClass = getCinemaClass(color1);
-          if (cinemaClass === 'cinema-bg-custom' && color1) {
-            sectionEl.style.setProperty('--section-color', color1);
-          }
-        }
-
-        let sectionClasses = 'cinema-section ' + cinemaClass;
-        if (pattern && pattern !== 'none') sectionClasses += ' bg-pattern-' + pattern;
-        sectionEl.className = sectionClasses;
+        sectionEl.className = 'cinema-section';
+        applySectionBackground(sectionEl, section);
 
         // Animated glow
         const glow = document.createElement('div');
         glow.className = 'cinema-glow';
-        glow.style.background = color1 || '#e63030';
+        glow.style.background = section.bgColor || '#e63030';
         sectionEl.appendChild(glow);
 
         // Package header
